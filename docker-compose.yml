@@ -9,9 +9,8 @@ services:
       - stats-db
     environment:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://stats-db:5432/ewm-stats
-      - SPRING_DATASOURCE_USER=postgresdb
+      - SPRING_DATASOURCE_USERNAME=postgresdb
       - SPRING_DATASOURCE_PASSWORD=123456
-      - SPRING_DATASOURCE_DRIVER-CLASS-NAME=org.postgresql.Driver
 
   stats-db:
     image: postgres:16.1
@@ -19,10 +18,14 @@ services:
     ports:
       - "5432:5432"
     environment:
-      - POSTGRES_DB=ewm-stats
+      - POSTGRES_PASSWORD=postgresdb
       - POSTGRES_USER=postgresdb
-      - POSTGRES_PASSWORD=123456
-
+      - POSTGRES_DB=ewm-stats
+    healthcheck:
+      test: pg_isready -q -d $$POSTGRES_DB -U $$POSTGRES_USER
+      timeout: 5s
+      interval: 5s
+      retries: 10
 
   ewm-service:
     build: ewm-main-service
@@ -34,9 +37,8 @@ services:
       - ewm-db
     environment:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://ewm-db:6540/ewm-service
-      - SPRING_DATASOURCE_USER=postgres
-      - SPRING_DATASOURCE_PASSWORD=12345
-      - SPRING_DATASOURCE_DRIVER-CLASS-NAME=org.postgresql.Driver
+      - SPRING_DATASOURCE_USERNAME=dbuser
+      - SPRING_DATASOURCE_PASSWORD=dbuser
 
   ewm-db:
     image: postgres:16.1
@@ -44,6 +46,11 @@ services:
     ports:
       - "6540:6540"
     environment:
+      - POSTGRES_PASSWORD=dbuser
+      - POSTGRES_USER=dbuser
       - POSTGRES_DB=ewm-service
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=12345
+    healthcheck:
+      test: pg_isready -q -d $$POSTGRES_DB -U $$POSTGRES_USER
+      timeout: 5s
+      interval: 5s
+      retries: 10
